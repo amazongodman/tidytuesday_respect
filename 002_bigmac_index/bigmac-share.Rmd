@@ -1,0 +1,414 @@
+---
+title: "bigmac-share"
+author: "Ringa"
+date: "2021/11/19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+
+```{r}
+#install.packages("tidytuesdayR")
+library(tidyverse)
+library(tidytuesdayR)
+```
+
+
+
+
+
+```{r}
+df <- tt_load("2020-12-22")
+```
+
+
+
+```{r}
+bigmac_df <- df$`big-mac`
+```
+
+
+
+```{r}
+library(lubridate)
+
+bigmac_df %>% 
+  filter(name == "Japan") %>% 
+  filter(date > ymd("2019-05-01"))
+
+```
+
+
+
+
+
+
+```{r}
+library(skimr)
+
+bigmac_df %>% 
+  skim()
+
+```
+
+
+
+
+
+
+
+```{r}
+main_name <- bigmac_df %>% 
+  filter(name %in% c("Japan","United States","Euro area","China","Britain"))
+```
+
+
+
+```{r}
+USdf <- main_name %>% 
+  filter(name == "United States") %>% 
+  mutate(USdf_local = local_price,
+         USdf_name = name,
+         USdf_usd_raw = usd_raw,
+         USdf_gdp_dollar = gdp_dollar,
+         USdf_dollar_price = dollar_price,
+         USdf_dollar_ex = dollar_ex) %>% 
+  select(date,starts_with("USdf"))
+
+```
+
+
+
+
+```{r}
+
+main_name %>% 
+  left_join(USdf, by = "date") %>% 
+  filter(name =="Japan") %>% 
+  select(date,name,
+         local_price,dollar_ex,dollar_price,
+         USdf_name,USdf_local,
+         USdf_dollar_price,USdf_dollar_ex) %>% 
+  mutate(local_par_dollar = local_price/dollar_price)
+
+
+```
+
+
+
+
+```{r}
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex)
+```
+
+
+
+
+
+
+```{r}
+
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex) %>% 
+
+  ggplot(aes(x=date,y=balance))+
+  geom_line()
+
+```
+
+
+ 
+
+
+
+
+
+
+
+```{r}
+main_name %>% 
+  ggplot(aes(x=date,y=dollar_price,color=name))+
+  geom_line()
+```
+
+
+
+```{r}
+main_name %>% 
+  ggplot(aes(x=date,y=usd_raw,color=name))+
+  geom_line()
+  
+```
+
+
+
+```{r}
+
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  ggplot(aes(x=date,y=dollar_price-USdf_dollar_price,color=name))+
+  geom_line()
+
+```
+
+
+```{r}
+library(patchwork)
+
+p1 <- main_name %>% 
+  ggplot(aes(x=date,y=usd_raw,color=name))+
+  geom_line()+
+  theme(legend.position = "None")+
+  ggtitle("bicmac index usd")
+
+p2 <- main_name %>% 
+  left_join(USdf,by="date") %>% 
+    ggplot(aes(x=date,y=dollar_price-USdf_dollar_price,color=name))+
+  geom_line()+
+  ggtitle("diff dollar price")
+
+p1 + p2
+
+```
+
+
+```{r}
+ main_name %>% 
+  ggplot(aes(x=date,y=usd_raw,color=name))+
+  geom_line()+
+  ggtitle("bicmac index usd")
+```
+
+
+
+
+
+```{r}
+
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  ggplot(aes(x=date,
+             y=(dollar_price-USdf_dollar_price),
+             color=name))+
+  geom_line()+
+  ggtitle("diff dollar price")
+
+```
+
+
+
+
+```{r}
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name=="China") %>% 
+  ggplot(aes(x=date,
+             y=(USdf_dollar_price)))+
+  geom_line()+
+  geom_line(aes(x=date,y=dollar_price),color = "red")
+```
+
+
+
+
+```{r}
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  ggplot(aes(x=date,
+             y=(dollar_price / USdf_dollar_price),
+             color=name))+
+  geom_line()+
+  ggtitle("dev dollar price")
+
+```
+
+
+
+
+
+
+
+
+```{r}
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex) %>% 
+  
+  ggplot(aes(x=date,y=balance))+
+  geom_line(color="blue")+
+  geom_point(aes(x=date,y=dollar_ex),color="red")
+  
+```
+
+
+
+
+```{r}
+main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex) %>% 
+  
+  ggplot(aes(x=date,y=dollar_price))+
+  geom_line(color="blue")+
+  geom_point(aes(x=date,y=USdf_local),color="red")
+  
+```
+
+
+
+
+```{r}
+p1 <- main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex) %>% 
+  
+  ggplot(aes(x=date,y=dollar_price))+
+  geom_line(color="blue")+
+  geom_point(aes(x=date,y=USdf_local),color="red")
+  
+p2 <- main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "Japan") %>% 
+  ggplot(aes(x=date,y=dollar_ex))+
+  geom_line()
+
+p1 / p2
+
+```
+
+
+```{r}
+p1 <- main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "China") %>% 
+  
+  mutate(bigmac_index = (dollar_price/USdf_local) -1,
+         balance = local_price / USdf_local ) %>% 
+  
+  select(date,name,dollar_price,USdf_local,usd_raw,bigmac_index,balance, dollar_ex) %>% 
+  
+  ggplot(aes(x=date,y=dollar_price))+
+  geom_line(color="blue")+
+  geom_point(aes(x=date,y=USdf_local),color="red")
+  
+p2 <- main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "China") %>% 
+  ggplot(aes(x=date,y=dollar_ex))+
+  geom_line()
+
+p1 / p2
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+p1<-main_name %>% 
+  filter(str_detect(name,"United")) %>% 
+  filter(!is.na(gdp_dollar)) %>% 
+  ggplot(aes(x=date,y=local_price))+
+  geom_line()
+
+p2<-main_name %>% 
+  filter(str_detect(name,"United")) %>% 
+  filter(!is.na(gdp_dollar)) %>% 
+  ggplot(aes(x=date,y=gdp_dollar))+
+  geom_line()
+
+p1/p2
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+m<- main_name %>% 
+  left_join(USdf,by="date") %>% 
+  filter(name == "China") %>% 
+  select(date,usd_raw,dollar_price,USdf_dollar_price) %>% 
+  mutate(diff = dollar_price - USdf_dollar_price)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
