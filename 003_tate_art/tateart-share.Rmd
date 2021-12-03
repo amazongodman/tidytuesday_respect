@@ -1,0 +1,1534 @@
+---
+title: "tate_art"
+author: "Ringa"
+date: "2021/12/2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+library(pacman)
+
+p_load(tidyverse,tidytuesdayR,skimr)
+
+```
+
+
+
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2021-01-12')
+
+tuesdata 
+
+```
+
+
+
+
+```{r}
+artists <- tuesdata$artists
+artwork <- tuesdata$artwork
+```
+
+
+
+
+```{r}
+artists
+```
+
+
+
+```{r}
+artists %>% skim()
+```
+
+
+
+
+```{r}
+
+artwork %>% skim()
+
+```
+
+
+
+
+
+
+```{r}
+tuesdata$artwork$year %>% boxplot()
+```
+
+
+
+```{r}
+tuesdata$artwork$units %>% unique()
+```
+
+
+```{r}
+https://raw.githubusercontent.com/tategallery/collection/master/artwork_data.csv
+```
+
+
+
+
+
+```{r}
+read_csv("https://raw.githubusercontent.com/tategallery/collection/master/artwork_data.csv") %>% 
+  nrow()
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+artists %>% 
+  count(id) %>% 
+  filter(n >1)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+artwork %>% 
+  left_join(artists,by=c("artistId" = "id")) %>% 
+  select(id,artistId,artist,name) %>% 
+  mutate(join_bool = artist == name) %>% 
+  pull(join_bool) %>% 
+  table()
+
+```
+
+
+
+
+
+```{r}
+artwork %>% 
+  filter(! artistId %in% unique(artists$id))
+```
+
+
+
+
+
+
+```{r}
+join_df <- artwork %>% 
+  left_join(artists,by=c("artistId" = "id"))
+```
+
+
+
+
+
+
+```{r}
+artists %>% names()
+```
+
+
+```{r}
+artwork %>% names()
+```
+
+
+```{r}
+artwork$artistRole %>% unique()
+```
+
+
+
+
+
+
+
+
+```{r}
+artwork %>% 
+  group_by(artist,artistRole) %>% 
+  summarise(n=n(),.groups = "drop") %>% 
+  group_by(artist) %>% 
+  summarise(n=n()) %>% 
+  filter(n>1)
+```
+
+
+
+
+```{r}
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  
+  slice(1:10) %>% 
+
+  ggplot()+
+  geom_point(aes(x=name,y=yearOfBirth))+
+  geom_point(aes(x=name,y=yearOfDeath))+
+  geom_segment(aes(x=name,y=yearOfBirth,
+                   xend=name,yend=yearOfDeath))+
+  coord_flip()+
+  ylab("birth to death")
+```
+
+
+
+
+
+```{r}
+
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  mutate(life = yearOfDeath - yearOfBirth) %>% 
+  ggplot(aes(x=gender,y=life))+
+  geom_boxplot()
+
+```
+
+
+
+
+
+
+
+
+```{r}
+
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  mutate(life = yearOfDeath - yearOfBirth) %>% 
+  ggplot(aes(x=gender,y=life))+
+  geom_violin()+
+  geom_jitter(alpha=0.2)
+
+```
+
+
+
+
+
+
+```{r}
+
+p_load(ggpol)
+
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  mutate(life = yearOfDeath - yearOfBirth) %>% 
+  ggplot(aes(x=gender,y=life,fill=gender))+
+  ggpol::geom_boxjitter()+
+  geom_violin(alpha=0.2)
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  mutate(life = yearOfDeath - yearOfBirth) %>% 
+  filter(life > 100)
+```
+
+
+
+
+サミュエル・アルケン
+    Samuel Alken (1756–1815)
+    Henry Thomas Alken (1785–1851)
+    Sefferein John Alken (1796–1873)
+    George Alken (d. 1862?)
+    Samuel Henry Gordon Alken (1810–1894)
+
+
+
+
+
+
+
+
+
+
+```{r}
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  count(yearOfBirth) %>% 
+  ggplot(aes(x=yearOfBirth,y=n))+
+  geom_point()+
+  xlim(c(1490,2021))
+```
+
+
+
+
+
+```{r}
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+  count(yearOfDeath) %>% 
+  ggplot(aes(x=yearOfDeath,y=n))+
+  geom_point()+
+  xlim(c(1490,2021))
+```
+
+
+
+
+```{r}
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+
+  add_count(yearOfDeath,name="Death") %>% 
+  add_count(yearOfBirth,name="Birth") %>%
+  ggplot()+
+  geom_point(aes(x=yearOfDeath,y=Death))+
+  geom_point(aes(x=yearOfBirth,y=Birth),color="red",alpha=0.2)+
+  xlim(c(1490,2021))
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+
+artists %>% 
+  filter(!is.na(yearOfBirth)) %>% 
+  filter(!is.na(yearOfDeath)) %>% 
+
+  add_count(yearOfDeath,name="Death") %>% 
+  add_count(yearOfBirth,name="Birth") %>%
+  ggplot()+
+  geom_point(aes(x=yearOfDeath,y=Death))+
+  geom_point(aes(x=yearOfBirth,y=Birth),color="red",alpha=0.2)+
+  xlim(c(1490,2021))+
+  
+  annotate(geom = "rect",alpha = .2,fill ="#ff00ff",
+           xmin = 1960,xmax = 2000,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=1980,y=28,label="近代")+
+  
+  annotate(geom = "rect",alpha = .2,fill ="#800080",
+           xmin = 2000,xmax = 2020,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=2010,y=30,label="現代")+
+    
+  annotate(geom = "rect",alpha = .2,fill ="#0000ff",
+           xmin = 1925,xmax = 1960,ymin = 15,ymax = 35)+
+  annotate(geom = "text",x=1940,y=33,label="シュルレアリスム")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#008080",
+           xmin = 1900,xmax = 1925,ymin = 15,ymax = 35)+
+  annotate(geom = "text",x=1915,y=30,label="フォービズム")+
+  annotate(geom = "text",x=1915,y=28,label="キュビズム")+
+  annotate(geom = "text",x=1915,y=26,label="抽象主義")+
+  annotate(geom = "text",x=1915,y=24,label="ダダイズム")+
+  
+  annotate(geom = "rect",alpha = .2,fill ="#008000",
+           xmin = 1860,xmax = 1900,ymin = 15,ymax = 35)+
+  annotate(geom = "text",x=1880,y=20,label="象徴主義")+
+  annotate(geom = "text",x=1880,y=18,label="印象派")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#ffff00",
+           xmin = 1840,xmax = 1950,ymin = 0,ymax = 15)+
+  annotate(geom = "text",x=1940,y=2,label="写実主義")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#ff0000",
+           xmin = 1780,xmax = 1830,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=1800,y=20,label="新古典主義")+
+  annotate(geom = "text",x=1800,y=18,label="ロマン主義")+
+  annotate(geom = "rect",alpha = .2,fill ="#808000",
+           xmin = 1700,xmax = 1780,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=1730,y=33,label="ロココ")+
+  annotate(geom = "rect",alpha = .2,fill ="#ff0000",
+           xmin = 1600,xmax = 1700,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=1630,y=33,label="バロック")+
+  annotate(geom = "rect",alpha = .2,fill ="#800000",
+           xmin = 1500,xmax = 1600,ymin = 0,ymax = 35)+
+  annotate(geom = "text",x=1530,y=33,label="マニエリスム")+ 
+  theme(text = element_text(size = 5))+
+  theme_bw()
+    
+
+```
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  count(year) %>% 
+  ggplot(aes(x=year,y=n))+
+  geom_point()+
+    
+  annotate(geom = "rect",alpha = .2,fill ="#ff00ff",
+           xmin = 1960,xmax = 2000,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=1980,y=4000,label="近代")+
+  
+  annotate(geom = "rect",alpha = .2,fill ="#800080",
+           xmin = 2000,xmax = 2020,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=2010,y=3800,label="現代")+
+    
+  annotate(geom = "rect",alpha = .2,fill ="#0000ff",
+           xmin = 1925,xmax = 1960,ymin = 2000,ymax = 4000)+
+  annotate(geom = "text",x=1940,y=3800,label="シュルレアリスム")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#008080",
+           xmin = 1900,xmax = 1925,ymin = 2000,ymax = 4000)+
+  annotate(geom = "text",x=1915,y=3500,label="フォービズム")+
+  annotate(geom = "text",x=1915,y=3200,label="キュビズム")+
+  annotate(geom = "text",x=1915,y=2900,label="抽象主義")+
+  annotate(geom = "text",x=1915,y=2600,label="ダダイズム")+
+  
+  annotate(geom = "rect",alpha = .2,fill ="#008000",
+           xmin = 1860,xmax = 1900,ymin = 2000,ymax = 4000)+
+  annotate(geom = "text",x=1880,y=2300,label="象徴主義")+
+  annotate(geom = "text",x=1880,y=2000,label="印象派")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#ffff00",
+           xmin = 1840,xmax = 1950,ymin = 0,ymax = 2000)+
+  annotate(geom = "text",x=1900,y=1000,label="写実主義")+
+
+  annotate(geom = "rect",alpha = .2,fill ="#ff0000",
+           xmin = 1780,xmax = 1830,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=1800,y=4000,label="新古典主義")+
+  annotate(geom = "text",x=1800,y=3700,label="ロマン主義")+
+  annotate(geom = "rect",alpha = .2,fill ="#808000",
+           xmin = 1700,xmax = 1780,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=1730,y=4000,label="ロココ")+
+  annotate(geom = "rect",alpha = .2,fill ="#008000",
+           xmin = 1600,xmax = 1700,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=1630,y=4000,label="バロック")+
+  annotate(geom = "rect",alpha = .2,fill ="#800000",
+           xmin = 1500,xmax = 1600,ymin = 0,ymax = 4000)+
+  annotate(geom = "text",x=1530,y=4000,label="マニエリスム")+ 
+  theme(text = element_text(size = 5))+
+  theme_bw()
+    
+```
+
+
+
+
+
+
+
+
+```{r}
+join_df %>%
+  group_by(artist) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n))
+```
+
+
+Turner, Joseph Mallord William
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  mutate( Turner_flag = if_else(artist == "Turner, Joseph Mallord William","is_Turner","not")) %>% 
+  group_by(year,Turner_flag) %>% 
+  summarise(n=n()) %>% 
+  unnest() %>% 
+  ggplot(aes(x=year,y=n,fill=Turner_flag))+
+  geom_col()
+```
+
+
+
+
+
+
+
+
+```{r}
+join_df %>%
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  group_by(artist) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n)) %>% 
+  ggplot(aes(x=n))+
+  geom_histogram(bins = 30)+
+  xlim(c(0,25))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  
+  group_by(width,height,gender) %>% 
+  summarise(n=n()) %>% 
+  ungroup() %>% 
+  arrange(desc(n))
+
+```
+
+
+
+
+```{r}
+join_df %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+
+  group_by(width,height,gender) %>% 
+  summarise(n=n()) %>% 
+  ungroup() %>% 
+  arrange(desc(n))
+
+```
+
+
+
+```{r}
+join_df %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  group_by(width,height,gender) %>% 
+  summarise(n=n()) %>% 
+  
+  ungroup() %>% 
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  facet_wrap(~gender)
+
+```
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+
+  ggplot(aes(x=width,y=height))+
+  stat_density2d(aes(fill=..density..), geom="raster", contour=F)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = log10(round(width,-1)),
+         height = log10(round(height,-1))) %>% 
+
+  ggplot(aes(x=height))+
+  geom_density()+
+  facet_wrap(~gender)
+
+```
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = log10(round(width,-1)),
+         height = log10(round(height,-1))) %>% 
+
+  ggplot(aes(x=width,y=height))+
+  stat_density2d(aes(fill=..density..), geom="raster", contour=F)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+
+  ggplot(aes(x=width))+
+  geom_boxplot()+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+
+```{r}
+
+join_df %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  
+  
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  facet_wrap(~gender)
+
+  
+```
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  geom_abline(slope = 1)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  geom_abline(slope = 4/3)+
+    geom_abline(slope = 3/4)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  geom_abline(slope = 5/8)+
+    geom_abline(slope = 8/5)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  geom_abline(slope = 16/9)+
+    geom_abline(slope = 9/16)+
+  facet_wrap(~gender)
+```
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = width,
+         height = height) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  ggplot(aes(x=width,y=height,color=gender))+
+  geom_point()+
+  geom_abline(slope = 4/3)+
+    geom_abline(slope = 3/4)+
+  facet_wrap(~gender)
+```
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  ggplot(aes(x=canvas_rate))+
+  geom_histogram()+
+  geom_vline(xintercept = 4/3)+
+  geom_vline(xintercept = 3/4)
+```
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(1,2,3)) %>% 
+  filter(width_tile %in% c(1,2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  ggplot(aes(x=canvas_rate))+
+  geom_histogram(bins = 100)+
+  xlim(0,2.5)
+```
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(2,3)) %>% 
+  filter(width_tile %in% c(2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  ggplot(aes(x=canvas_rate,fill=gender))+
+  geom_histogram(bins = 100)+
+  facet_wrap(~gender,scales = "free_y")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+join_df %>% 
+    filter(artist == "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(1,2,3)) %>% 
+  filter(width_tile %in% c(1,2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  ggplot(aes(x=canvas_rate))+
+  geom_histogram(bins = 100)
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(1,2,3)) %>% 
+  filter(width_tile %in% c(1,2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  filter(canvas_rate > 1) %>% 
+  
+  ggplot(aes(x=year,y=canvas_rate))+
+  geom_point()
+```
+
+
+
+
+
+```{r}
+
+p_load(patchwork)
+
+g1<- join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(1,2,3)) %>% 
+  filter(width_tile %in% c(1,2,3)) %>% 
+  
+  mutate(canvas_rate = height/width) %>% 
+  
+  filter(canvas_rate<1) %>% 
+  
+  ggplot(aes(x=year,y=canvas_rate))+
+  geom_point()+
+  ggtitle("height / width, 0 is wide")+
+  
+  xlim(1490,2021)+
+  ylim(c(0,1))
+
+g2<- join_df %>% 
+    filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  mutate(width_tile = ntile(width,4),
+         height_tile = ntile(height,4)) %>% 
+  filter(height_tile %in% c(1,2,3)) %>% 
+  filter(width_tile %in% c(1,2,3)) %>% 
+  
+  mutate(canvas_rate = width/height) %>% 
+  
+  filter(canvas_rate<1) %>% 
+  
+  ggplot(aes(x=year,y=canvas_rate))+
+  geom_point()+
+
+  ggtitle("width / height, 0 is long")+
+  xlim(1490,2021)+
+  ylim(c(0,1))
+
+
+g1 + g2
+```
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  pull(medium) %>% 
+  unique() %>% 
+  head()
+```
+
+
+
+
+
+```{r}
+options(scipen=100)
+```
+
+
+
+```{r}
+join_df %>%
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  mutate(area = width * height) %>% 
+  
+  
+  group_by(year) %>% 
+  
+  summarise(sum_area = sum(area)) %>% 
+  ungroup() %>% 
+  
+  ggplot(aes(x=year,y=sum_area))+
+  geom_point()+
+  ylim(9,300000000)
+  
+```
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>%
+  filter(artist == "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  mutate(area = width * height) %>% 
+  
+  
+  group_by(year) %>% 
+  
+  summarise(sum_area = sum(area)) %>% 
+  ungroup() %>% 
+  
+  ggplot(aes(x=year,y=sum_area))+
+  geom_point()+
+  ylim(9,300000000)
+  
+```
+
+
+
+
+
+
+```{r}
+
+join_df %>%
+  filter(artist == "Turner, Joseph Mallord William") %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  #filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  separate(medium,into=c("tool","base"),sep = "on") %>% 
+  group_by(base) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+join_df %>%
+ filter(artist != "Turner, Joseph Mallord William") %>% 
+  filter(year>1950) %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  #filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  separate(medium,into=c("tool","base"),sep = "on") %>% 
+
+  
+    mutate(area = width * height) %>% 
+  mutate(area_cm = width*0.01 * height*0.01) %>% 
+  
+  group_by(base) %>% 
+  summarise(sum_area = sum(area),
+            cm_2 = sum(area_cm)) %>% 
+  arrange(desc(sum_area))
+
+```
+
+
+
+
+
+
+
+
+
+```{r}
+
+join_df %>%
+#filter(artist == "Turner, Joseph Mallord William") %>% 
+  filter(year>1950) %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  
+  filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+
+  separate(medium,into=c("tool","base"),sep = "on") %>% 
+
+  mutate(area = width * height) %>% 
+  mutate(area_cm = width*0.01 * height*0.01) %>% 
+
+  group_by(name) %>% 
+  summarise(sum_area = sum(area),
+            cm_2 = sum(area_cm)) %>% 
+  arrange(desc(sum_area))
+
+```
+
+
+
+
+
+
+
+```{r}
+
+join_df %>%
+#filter(artist == "Turner, Joseph Mallord William") %>% 
+  filter(between(year,1850,1950)) %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+
+  separate(medium,into=c("tool","base"),sep = "on") %>% 
+
+  
+  mutate(area = width * height) %>% 
+  mutate(area_cm = width*0.01 * height*0.01) %>% 
+
+  
+  group_by(name) %>% 
+  summarise(sum_area = sum(area),
+            cm_2 = sum(area_cm)) %>% 
+  arrange(desc(sum_area))
+
+```
+
+
+
+
+
+
+
+
+```{r}
+artists %>% 
+  filter(between(yearOfBirth,1870,1920))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>%
+  #filter(artist == "Turner, Joseph Mallord William") %>% 
+  #filter(between(year,1850,1950)) %>% 
+  filter(!is.na(width) & !is.na(height)) %>% 
+  mutate(width = round(width,-1),
+         height = round(height,-1)) %>% 
+  filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  separate(medium,into=c("tool","base"),sep = "on") %>% 
+
+  mutate(area = width * height) %>% 
+  mutate(area_cm = width*0.01 * height*0.01) %>% 
+  
+  group_by(name) %>% 
+  summarise(sum_area = sum(area,na.rm = T),
+            cm_2 = sum(area_cm,na.rm = T)) %>% 
+  arrange(desc(sum_area)) %>% 
+  
+  filter(  str_detect(name, "Picasso") | 
+           str_detect(name, "Bacon, Francis")|
+           str_detect(name, "Monet, Claude")|
+           str_detect(name, "Renoir, Auguste")|
+           str_detect(name, "Matisse")|
+           str_detect(name, "Derain")|
+           str_detect(name, "Chagall")|
+           str_detect(name, "Magritte"))
+
+```
+
+
+
+
+
+
+```{r}
+p_load(tidytext)
+```
+
+
+
+
+
+```{r}
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+
+  tidytext::unnest_tokens(word,title) %>% 
+  
+  anti_join(stop_words) %>% 
+  
+  group_by(word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+  arrange(desc(n))
+```
+
+
+
+```{r}
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+tidytext::unnest_tokens(word,title) %>% 
+  anti_join(stop_words) %>%
+  
+  filter(!str_detect(word,"[:digit:]")) %>% 
+  filter(!str_detect(word,"title")) %>% 
+  filter(!str_detect(word,"untitled")) %>% 
+  
+  group_by(word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+  arrange(desc(n))
+```
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+tidytext::unnest_tokens(word,title) %>% 
+  anti_join(stop_words) %>%
+  
+  filter(!str_detect(word,"[:digit:]")) %>% 
+  filter(!str_detect(word,"title")) %>% 
+  filter(!str_detect(word,"untitled")) %>% 
+  
+  group_by(year,word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+  arrange(desc(n)) %>% 
+
+  group_by(year) %>% 
+  slice_max(order_by = n) %>% 
+  arrange(desc(year),desc(n))
+```
+
+
+
+
+
+
+
+```{r}
+year_seq<- seq(1500,2100,100)
+year_seq
+```
+
+
+
+```{r}
+p_load(glue)
+
+
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+  tidytext::unnest_tokens(word,title) %>% 
+  anti_join(stop_words) %>%
+  
+  filter(!str_detect(word,"[:digit:]")) %>% 
+  filter(!str_detect(word,"title")) %>% 
+  filter(!str_detect(word,"untitled")) %>% 
+  
+  
+  filter(!str_detect(word,"ii")) %>% 
+  filter(!str_detect(word,"el")) %>% 
+  filter(!str_detect(word,"unknown")) %>% 
+  
+  
+  mutate(each_100 = case_when(
+    between(year,year_seq[1],year_seq[2]) ~ glue("{year_seq[1]}-{year_seq[2]}"),
+    between(year,year_seq[2],year_seq[3]) ~ glue("{year_seq[2]}-{year_seq[3]}"),
+    between(year,year_seq[3],year_seq[4]) ~ glue("{year_seq[3]}-{year_seq[4]}"),
+    between(year,year_seq[4],year_seq[5]) ~ glue("{year_seq[4]}-{year_seq[5]}"),
+    between(year,year_seq[5],year_seq[6]) ~ glue("{year_seq[5]}-{year_seq[6]}"),
+    between(year,year_seq[6],year_seq[7]) ~ glue("{year_seq[6]}-{year_seq[7]}")
+    )) %>% 
+  
+  group_by(each_100,word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+
+  group_by(each_100) %>% 
+  slice_max(order_by = n,n=3) %>% 
+  arrange(desc(each_100),desc(n))
+```
+
+
+
+
+
+
+
+```{r}
+
+
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+tidytext::unnest_tokens(word,title) %>% 
+  anti_join(stop_words) %>%
+  
+  filter(!str_detect(word,"[:digit:]")) %>% 
+  filter(!str_detect(word,"title")) %>% 
+  filter(!str_detect(word,"untitled")) %>% 
+  
+  filter(!str_detect(word,"ii")) %>% 
+  filter(!str_detect(word,"el")) %>% 
+  filter(!str_detect(word,"unknown")) %>% 
+  
+  mutate(each_100 = case_when(
+    between(year,year_seq[1],year_seq[2]) ~ glue("{year_seq[1]}-{year_seq[2]}"),
+    between(year,year_seq[2],year_seq[3]) ~ glue("{year_seq[2]}-{year_seq[3]}"),
+    between(year,year_seq[3],year_seq[4]) ~ glue("{year_seq[3]}-{year_seq[4]}"),
+    between(year,year_seq[4],year_seq[5]) ~ glue("{year_seq[4]}-{year_seq[5]}"),
+    between(year,year_seq[5],year_seq[6]) ~ glue("{year_seq[5]}-{year_seq[6]}"),
+    between(year,year_seq[6],year_seq[7]) ~ glue("{year_seq[6]}-{year_seq[7]}")
+    )) %>% 
+  
+  group_by(each_100,word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+  group_by(each_100) %>% 
+  slice_max(order_by = n,n=3) %>% 
+  arrange(desc(each_100),desc(n)) %>% 
+  
+  
+  
+  
+  mutate(y=row_number()) %>% 
+  ungroup() %>% 
+
+  
+  mutate(start_year = as.numeric(str_sub(each_100,1,4))) %>% 
+  
+  mutate(each_100_fct = fct_reorder(factor(each_100),start_year,.fun = median)) %>% 
+  #mutate(x = as.integer(each_100_fct)) %>% 
+
+  ggplot(aes(x=each_100_fct,y=y))+
+  geom_text(aes(label=glue("{word}({n})")))+
+  ylim(c(0,6))+
+  coord_flip()
+
+```
+
+
+
+
+
+
+
+
+```{r}
+
+
+
+join_df %>% 
+  filter(!is.na(year)) %>% 
+  
+    filter(str_detect(medium,"on paper") | str_detect(medium,"on canvas") ) %>% 
+  
+  filter(artist != "Turner, Joseph Mallord William") %>% 
+tidytext::unnest_tokens(word,title) %>% 
+  anti_join(stop_words) %>%
+  
+  filter(!str_detect(word,"[:digit:]")) %>% 
+  filter(!str_detect(word,"title")) %>% 
+  filter(!str_detect(word,"untitled")) %>% 
+  
+  filter(!str_detect(word,"ii")) %>% 
+  filter(!str_detect(word,"el")) %>% 
+  filter(!str_detect(word,"unknown")) %>% 
+  
+  mutate(each_100 = case_when(
+    between(year,year_seq[1],year_seq[2]) ~ glue("{year_seq[1]}-{year_seq[2]}"),
+    between(year,year_seq[2],year_seq[3]) ~ glue("{year_seq[2]}-{year_seq[3]}"),
+    between(year,year_seq[3],year_seq[4]) ~ glue("{year_seq[3]}-{year_seq[4]}"),
+    between(year,year_seq[4],year_seq[5]) ~ glue("{year_seq[4]}-{year_seq[5]}"),
+    between(year,year_seq[5],year_seq[6]) ~ glue("{year_seq[5]}-{year_seq[6]}"),
+    between(year,year_seq[6],year_seq[7]) ~ glue("{year_seq[6]}-{year_seq[7]}")
+    )) %>% 
+  
+  group_by(each_100,word) %>% 
+  summarise(n=n(),.groups = "drop") %>%
+  group_by(each_100) %>% 
+  slice_max(order_by = n,n=3) %>% 
+  arrange(desc(each_100),desc(n)) %>% 
+  
+  
+  
+  
+  mutate(y=row_number()) %>% 
+  ungroup() %>% 
+
+  
+  mutate(start_year = as.numeric(str_sub(each_100,1,4))) %>% 
+  
+  mutate(each_100_fct = fct_reorder(factor(each_100),start_year,.fun = median)) %>% 
+  #mutate(x = as.integer(each_100_fct)) %>% 
+
+  ggplot(aes(x=each_100_fct,y=y))+
+  geom_text(aes(label=glue("{word}({n})")))+
+  ylim(c(0,6))+
+  coord_flip()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+join_df %>% 
+  group_by(acquisitionYear) %>% 
+  summarise(n=n()) %>% 
+  ggplot(aes(x=acquisitionYear,y=n))+
+  geom_line()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+canvas <- read_csv("C:\\Users\\ringa\\Desktop\\tidytuesday_respect\\003_tate_art\\canvas_size.csv")
+
+canvas %>% 
+  mutate(Figure = str_replace(Figure,"<U+0081>~",""),
+         Paysage = str_replace(Paysage,"<U+0081>~",""),
+         Marine = str_replace(Marine,"<U+0081>~",""),
+         Square = str_replace(Square,"<U+0081>~","")
+         ) %>% 
+  separate(Figure,into=c("Figure_h","Figure_w")) %>% 
+  separate(Paysage,into=c("Paysage_h","Paysage_w")) %>% 
+  separate(Marine,into=c("Marine_h","Marine_w")) %>% 
+  separate(Square,into=c("Square_h","Square_w")) %>% 
+    type_convert()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
